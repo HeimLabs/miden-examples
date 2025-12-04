@@ -71,7 +71,8 @@ export const createFaucet = async (
     isNonFungible,
     symbol,
     decimals,
-    initialSupply
+    initialSupply,
+    0 // seed parameter
   );
   return faucet;
 };

@@ -27,12 +27,14 @@ export default function Home() {
   const [consumeTxHash, setConsumeTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Load stored faucet ID on mount
+  // Load stored faucet ID on mount and ensure ERC20 is selected
   useEffect(() => {
     const stored = getStoredFaucetId();
     if (stored) {
       setFaucetId(stored);
     }
+    // Force ERC20 since ERC721 is not supported
+    setTokenType("ERC20");
   }, []);
 
   const handleMint = async () => {
@@ -220,17 +222,22 @@ export default function Home() {
                   />
                   <span className="text-gray-300">ERC20 (Fungible)</span>
                 </label>
-                <label className="flex items-center space-x-2 cursor-pointer">
+                <label className="flex items-center space-x-2 cursor-not-allowed opacity-50">
                   <input
                     type="radio"
                     name="tokenType"
                     value="ERC721"
                     checked={tokenType === "ERC721"}
-                    onChange={(e) => setTokenType(e.target.value as "ERC20" | "ERC721")}
-                    className="w-4 h-4 text-orange-600 bg-gray-700 border-gray-600 focus:ring-orange-500"
+                    disabled
+                    className="w-4 h-4 text-orange-600 bg-gray-700 border-gray-600 focus:ring-orange-500 cursor-not-allowed"
                   />
                   <span className="text-gray-300">ERC721 (Non-Fungible)</span>
                 </label>
+              </div>
+              <div className="mt-3 p-3 bg-yellow-900/20 border border-yellow-700 rounded-lg">
+                <p className="text-yellow-400 text-xs">
+                  ⚠️ ERC721 (Non-Fungible) tokens are not yet supported. Only ERC20 (Fungible) tokens are available.
+                </p>
               </div>
             </div>
 

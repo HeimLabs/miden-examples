@@ -30,13 +30,18 @@ export default function DeployFaucetPage() {
       return;
     }
 
+    if (tokenType === "ERC721") {
+      alert("ERC721 tokens are not yet supported. Please select ERC20.");
+      return;
+    }
+
     setIsDeploying(true);
     setError(null);
     setFaucetId(null);
 
     try {
       const client = await createAndSyncClient();
-      const isNonFungible = tokenType === "ERC721";
+      const isNonFungible = false; // ERC721 not supported yet
       const decimalsNum = parseInt(decimals);
       const supplyBigInt = BigInt(initialSupply) * BigInt(10 ** decimalsNum);
 
@@ -102,17 +107,22 @@ export default function DeployFaucetPage() {
                   />
                   <span className="text-gray-300">ERC20 (Fungible)</span>
                 </label>
-                <label className="flex items-center space-x-2 cursor-pointer">
+                <label className="flex items-center space-x-2 cursor-not-allowed opacity-50">
                   <input
                     type="radio"
                     name="tokenType"
                     value="ERC721"
                     checked={tokenType === "ERC721"}
-                    onChange={(e) => setTokenType(e.target.value as "ERC20" | "ERC721")}
-                    className="w-4 h-4 text-orange-600 bg-gray-700 border-gray-600 focus:ring-orange-500"
+                    disabled
+                    className="w-4 h-4 text-orange-600 bg-gray-700 border-gray-600 focus:ring-orange-500 cursor-not-allowed"
                   />
                   <span className="text-gray-300">ERC721 (Non-Fungible)</span>
                 </label>
+              </div>
+              <div className="mt-3 p-3 bg-yellow-900/20 border border-yellow-700 rounded-lg">
+                <p className="text-yellow-400 text-xs">
+                  ⚠️ ERC721 (Non-Fungible) tokens are not yet supported. Only ERC20 (Fungible) tokens can be deployed.
+                </p>
               </div>
             </div>
 
