@@ -11,9 +11,9 @@ import { NODE_ENDPOINT, STORAGE_KEYS } from "./constants";
  * Create and sync a WebClient instance
  */
 export const createAndSyncClient = async (): Promise<WebClient> => {
-  const client = await WebClient.createClient(NODE_ENDPOINT);
-  await client.syncState();
-  return client;
+    const client = await WebClient.createClient(NODE_ENDPOINT);
+    await client.syncState();
+    return client;
 };
 
 /**
@@ -97,7 +97,7 @@ export const mintTokens = async (
   );
 
   const mintTxId = await client.submitNewTransaction(faucetId, mintTxRequest);
-  await client.syncState();
+        await client.syncState();
 
   return mintTxId;
 };
@@ -127,14 +127,14 @@ export const createConsumeTransactionRequest = (
  * Error handler
  */
 export const handleError = (error: any, context: string): string => {
-  console.error(`Error ${context}:`, error);
+    console.error(`Error ${context}:`, error);
 
-  let message = `Error ${context}`;
-  if (error.message?.includes("insufficient")) {
-    message = "Insufficient balance or funds";
-  } else if (error.message) {
-    message = error.message;
-  }
+    let message = `Error ${context}`;
+    if (error.message?.includes("insufficient")) {
+        message = "Insufficient balance or funds";
+    } else if (error.message) {
+        message = error.message;
+    }
 
-  return message;
+    return message;
 };

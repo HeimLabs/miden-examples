@@ -14,8 +14,37 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Miden Web App",
-  description: "Miden blockchain tutorials with wallet integration",
+  title: "Miden Counter - Increment Counter on Miden Blockchain",
+  description: "A simple web application for interacting with a counter smart contract on the Miden rollup. Connect your wallet and increment the counter value.",
+  keywords: ["Miden", "blockchain", "counter", "smart contract", "web3", "wallet"],
+  authors: [{ name: "Heimlabs" }],
+  openGraph: {
+    title: "Miden Counter",
+    description: "Increment counter on Miden blockchain",
+    type: "website",
+    images: [
+      {
+        url: "/counter-icon.png",
+        width: 512,
+        height: 512,
+        alt: "Miden Counter Icon",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "Miden Counter",
+    description: "Increment counter on Miden blockchain",
+    images: ["/counter-icon.png"],
+  },
+  icons: {
+    icon: [
+      { url: "/counter-icon.png", type: "image/png" },
+      { url: "/counter-icon.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/counter-icon.png",
+    shortcut: "/counter-icon.png",
+  },
 };
 
 export default function RootLayout({

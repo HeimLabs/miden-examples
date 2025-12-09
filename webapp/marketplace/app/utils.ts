@@ -1,11 +1,10 @@
 import {
   WebClient,
   Address,
-  AccountStorageMode,
   NoteType,
   ConsumableNoteRecord,
 } from "@demox-labs/miden-sdk";
-import { NODE_ENDPOINT, STORAGE_KEYS, TOKEN_DECIMALS } from "./constants";
+import { NODE_ENDPOINT, TOKEN_DECIMALS } from "./constants";
 
 /**
  * Create and sync a WebClient instance
@@ -23,59 +22,7 @@ export const getAccountIdFromAddress = (address: string) => {
   return Address.fromBech32(address).accountId();
 };
 
-/**
- * Get stored faucet ID from localStorage
- */
-export const getStoredFaucetId = (): string | null => {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(STORAGE_KEYS.FAUCET_ID);
-};
-
-/**
- * Store faucet ID and metadata in localStorage
- */
-export const storeFaucetInfo = (
-  faucetId: string,
-  isNonFungible: boolean,
-  symbol: string,
-  decimals: number
-): void => {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEYS.FAUCET_ID, faucetId);
-  localStorage.setItem(STORAGE_KEYS.FAUCET_TYPE, isNonFungible.toString());
-  localStorage.setItem(STORAGE_KEYS.FAUCET_SYMBOL, symbol);
-  localStorage.setItem(STORAGE_KEYS.FAUCET_DECIMALS, decimals.toString());
-};
-
-/**
- * Get stored faucet type
- */
-export const getStoredFaucetType = (): boolean | null => {
-  if (typeof window === "undefined") return null;
-  const stored = localStorage.getItem(STORAGE_KEYS.FAUCET_TYPE);
-  return stored === null ? null : stored === "true";
-};
-
-/**
- * Create a new faucet account
- */
-export const createFaucet = async (
-  client: WebClient,
-  isNonFungible: boolean,
-  symbol: string,
-  decimals: number,
-  initialSupply: bigint
-) => {
-  const faucet = await client.newFaucet(
-    AccountStorageMode.public(),
-    isNonFungible,
-    symbol,
-    decimals,
-    initialSupply,
-    0 // seed parameter
-  );
-  return faucet;
-};
+// Note: Faucet storage functions removed - marketplace uses fixed faucet IDs from constants
 
 /**
  * Mint tokens to a recipient account
