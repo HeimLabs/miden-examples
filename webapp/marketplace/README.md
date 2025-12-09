@@ -63,14 +63,9 @@ This Next.js application provides a marketplace interface where users can purcha
 4. Approve the MIDEN token transfer in your wallet
 5. Wait for the transaction to be processed
 6. HLT tokens will be minted as a reward
-7. The app will automatically search for consumable reward notes
-8. Once notes are found, click "Consume Reward Tokens" to import them into your wallet
+7. The app will prompt for consumable reward notes
+8. Click "Consume Reward Tokens" to import them into your wallet
 9. HLT tokens will be added to your vault after successful consumption
-
-### Viewing Transactions
-
-- Click transaction links to view details on MidenScan
-- Purchase, reward mint, and consume transaction hashes are displayed with links
 
 ## Configuration
 
@@ -81,6 +76,8 @@ The application is configured to work with the Miden Testnet. Key settings can b
 - **MIDEN Faucet ID**: `mtst1ap2t7nsjausqsgrswk9syfzkcu328yna` (payment token)
 - **HLT Faucet ID**: `mm1arajukt424pyvgrcgg6wxnycwvezgzey` (reward token)
 - **Token Decimals**: 8 (for both MIDEN and HLT)
+
+>You can create your own faucets by using this [Tokens Example](../token/) 
 
 ### Marketplace Assets
 
@@ -108,78 +105,3 @@ marketplace/
 ├── tailwind.config.js              # Tailwind CSS configuration
 └── next.config.ts                  # Next.js configuration
 ```
-
-## Development
-
-### Available Scripts
-
-- `yarn dev` - Start development server
-- `yarn build` - Build for production
-- `yarn start` - Start production server
-- `yarn lint` - Run ESLint
-
-### Code Organization
-
-- **Components**: Reusable UI components (Navbar, WalletProviders)
-- **Utils**: Client and note operation utilities
-- **Constants**: Configuration values (endpoints, faucet IDs, marketplace assets)
-- **Pages**: Main marketplace page with asset listings and purchase flow
-
-### Purchase Flow
-
-1. **User Initiates Purchase**: User clicks "Purchase" on an asset
-2. **MIDEN Payment**: User sends MIDEN tokens via wallet adapter (SendTransaction)
-3. **Reward Minting**: Marketplace mints HLT tokens to user's account (from HLT faucet)
-4. **Note Detection**: App polls for consumable notes after reward transaction
-5. **Consume Notes**: User consumes notes via wallet adapter to add HLT tokens to vault
-
-### Important Notes
-
-- **Payment**: MIDEN tokens are sent using the wallet adapter's `SendTransaction`
-- **Rewards**: HLT tokens are minted as P2ID (Public-to-ID) notes that need to be consumed
-- **Note Consumption**: Reward notes must be consumed through the wallet adapter to add tokens to your vault
-- **Asset Images**: Currently using placeholder images from Unsplash. Replace with your own asset images.
-
-## Technologies Used
-
-- **Framework**: Next.js 15 with App Router
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Blockchain**: Miden SDK (@demox-labs/miden-sdk v0.12.3)
-- **Wallets**: Miden Wallet Adapter (@demox-labs/miden-wallet-adapter v0.10.0)
-- **State Management**: React hooks
-
-## Deployment
-
-### Vercel (Recommended)
-
-1. Connect your repository to Vercel
-2. Deploy automatically on push to main branch
-3. Environment variables can be configured in Vercel dashboard
-
-### Manual Deployment
-
-```bash
-yarn build
-yarn start
-```
-
-## Contributing
-
-See `contributing.md` for contribution guidelines, including Markdown formatting with Prettier.
-
-## Limitations
-
-- Asset images are currently placeholder images
-- Marketplace does not track ownership or prevent duplicate purchases
-- No backend integration for asset metadata or inventory management
-
-## Future Enhancements
-
-- Backend integration for asset management
-- User asset inventory/collection view
-- Asset ownership tracking
-- Multiple payment token options
-- Asset categories and filtering
-- Search functionality
-- User profiles and purchase history
