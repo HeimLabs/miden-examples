@@ -5,7 +5,7 @@ import { useState } from "react";
 interface CreatorProfileFormProps {
   initialName?: string;
   initialBio?: string;
-  onSubmit: (name: string, bio: string) => Promise<void>;
+  onSubmit: (name: string, bio: string | null) => Promise<void>;
   isSubmitting?: boolean;
 }
 

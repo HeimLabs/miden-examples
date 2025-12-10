@@ -7,6 +7,9 @@ import { Navbar } from "../components/Navbar";
 import { CreatorProfileForm } from "../components/CreatorProfileForm";
 import { PaymentsTable } from "../components/PaymentsTable";
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 export default function DashboardPage() {
   const { connected, address } = useWallet();
   const [activeTab, setActiveTab] = useState<"profile" | "payments">("profile");
@@ -21,8 +24,8 @@ export default function DashboardPage() {
   const [showEmbedCode, setShowEmbedCode] = useState(false);
 
   useEffect(() => {
-    if (address) {
-      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    if (address && typeof window !== 'undefined') {
+      const origin = window.location.origin;
       setPublicLink(`${origin}/c/${address}`);
       setEmbedLink(`${origin}/embed/${address}`);
     }

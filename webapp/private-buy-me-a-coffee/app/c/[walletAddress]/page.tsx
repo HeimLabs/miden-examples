@@ -13,19 +13,30 @@ interface Creator {
 export default function CreatorPage({
   params,
 }: {
-  params: { walletAddress: string };
+  params: Promise<{ walletAddress: string }>;
 }) {
   const [creator, setCreator] = useState<Creator | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [walletAddress, setWalletAddress] = useState<string>("");
 
   useEffect(() => {
+    const loadParams = async () => {
+      const resolvedParams = await params;
+      setWalletAddress(resolvedParams.walletAddress);
+    };
+    loadParams();
+  }, [params]);
+
+  useEffect(() => {
+    if (!walletAddress) return;
+
     const loadCreator = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        const response = await fetch(`/api/creator/${params.walletAddress}`);
+        const response = await fetch(`/api/creator/${walletAddress}`);
 
         if (!response.ok) {
           if (response.status === 404) {
@@ -46,10 +57,8 @@ export default function CreatorPage({
       }
     };
 
-    if (params.walletAddress) {
-      loadCreator();
-    }
-  }, [params.walletAddress]);
+    loadCreator();
+  }, [walletAddress]);
 
   if (isLoading) {
     return (

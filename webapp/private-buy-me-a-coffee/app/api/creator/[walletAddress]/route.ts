@@ -17,10 +17,10 @@ import { getCreator } from "../../../lib/db";
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { walletAddress: string } }
+  { params }: { params: Promise<{ walletAddress: string }> }
 ) {
   try {
-    const { walletAddress } = params;
+    const { walletAddress } = await params;
 
     if (!walletAddress) {
       return NextResponse.json(

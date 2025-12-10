@@ -176,7 +176,7 @@ export const sendPrivatePayment = async (
     throw new Error("Transaction failed: No transaction hash returned");
   }
 
-  const txHashString = typeof txHash === "string" ? txHash : txHash.toString();
+  const txHashString = typeof txHash === "string" ? txHash : String(txHash);
 
   console.log(`Private payment transaction submitted: ${txHashString}`);
   console.log(`Sending ${amount} HLT from ${senderAddress} to ${recipientAddress}`);
@@ -276,7 +276,7 @@ export const consumeNote = async (
     throw new Error("Consume transaction failed: No transaction hash returned");
   }
 
-  return typeof txHash === "string" ? txHash : txHash.toString();
+  return typeof txHash === "string" ? txHash : String(txHash);
 };
 
 /**

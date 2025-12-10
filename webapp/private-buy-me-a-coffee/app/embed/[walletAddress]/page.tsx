@@ -12,16 +12,27 @@ interface Creator {
 export default function EmbedButtonPage({
   params,
 }: {
-  params: { walletAddress: string };
+  params: Promise<{ walletAddress: string }>;
 }) {
   const [creator, setCreator] = useState<Creator | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [walletAddress, setWalletAddress] = useState<string>("");
 
   useEffect(() => {
+    const loadParams = async () => {
+      const resolvedParams = await params;
+      setWalletAddress(resolvedParams.walletAddress);
+    };
+    loadParams();
+  }, [params]);
+
+  useEffect(() => {
+    if (!walletAddress) return;
+
     const loadCreator = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`/api/creator/${params.walletAddress}`);
+        const response = await fetch(`/api/creator/${walletAddress}`);
         if (response.ok) {
           const data = await response.json();
           setCreator(data);
@@ -33,10 +44,8 @@ export default function EmbedButtonPage({
       }
     };
 
-    if (params.walletAddress) {
-      loadCreator();
-    }
-  }, [params.walletAddress]);
+    loadCreator();
+  }, [walletAddress]);
 
   if (isLoading) {
     return (
@@ -50,7 +59,7 @@ export default function EmbedButtonPage({
     return null;
   }
 
-  const creatorPageUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/c/${params.walletAddress}`;
+  const creatorPageUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/c/${walletAddress}`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center p-2 sm:p-4">

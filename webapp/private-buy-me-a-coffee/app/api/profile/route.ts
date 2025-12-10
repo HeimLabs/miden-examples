@@ -37,6 +37,13 @@ export async function POST(request: NextRequest) {
 
     const creator = upsertCreator(walletAddress, name, bio || null);
 
+    if (!creator) {
+      return NextResponse.json(
+        { error: "Failed to save profile" },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({
       walletAddress: creator.walletAddress,
       name: creator.name,

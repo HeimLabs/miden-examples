@@ -3,8 +3,16 @@
 import { useWallet } from "@demox-labs/miden-wallet-adapter";
 import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter";
 import { Navbar } from "./components/Navbar";
-import { trimAddress } from "./utils";
 import Link from "next/link";
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
+// Helper function moved here to avoid importing SDK during build
+const trimAddress = (address: string): string => {
+  if (address.length <= 10) return address;
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+};
 
 export default function Home() {
   const { connected, address } = useWallet();
