@@ -1,6 +1,6 @@
 # Private Buy Me a Coffee
 
-A private "Buy Me a Coffee" style application built on the Miden blockchain, enabling creators to receive private HLT token payments from supporters using Miden wallet authentication.
+A private "Buy Me a Coffee" application built on the Miden blockchain, enabling creators to receive private HLT token payments from supporters using Miden wallet authentication.
 
 Built with Next.js, TypeScript, Tailwind CSS, and SQLite by [Heimlabs.com](https://heimlabs.com).
 
