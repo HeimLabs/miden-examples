@@ -1,33 +1,67 @@
-# Miden Token Minting Web App
+# Private Buy Me a Coffee
 
-A standalone web application for minting fungible tokens (ERC20) on [Miden.xyz](https://miden.xyz) by [Heimlabs.com](https://heimlabs.com).
+A private "Buy Me a Coffee" style application built on the Miden blockchain, enabling creators to receive private HLT token payments from supporters using Miden wallet authentication.
+
+Built with Next.js, TypeScript, Tailwind CSS, and SQLite by [Heimlabs.com](https://heimlabs.com).
 
 ## Overview
 
-This Next.js application provides a clean, focused interface for deploying token faucets and minting tokens on the Miden rollup. It demonstrates how to create fungible tokens, mint them as P2ID notes, and consume those notes to add tokens to your vault using the Miden SDK and wallet adapter.
+This application allows creators to set up public profiles and receive private HLT token payments from supporters. All transactions are private on the Miden blockchain, ensuring complete privacy for both creators and supporters. Creators can claim received payments (consumable notes) directly in their dashboard.
 
 ## Features
 
-- **Wallet Integration**: Connect Miden-compatible wallets
-- **Faucet Deployment**: Deploy your own token faucet with custom symbol, decimals, and initial supply
-- **Token Minting**: Mint fungible tokens (ERC20) that create P2ID notes
-- **Automatic Note Detection**: Automatically searches for consumable notes after minting
-- **Note Consumption**: Consume notes via wallet adapter to add tokens to your vault
-- **Transaction Tracking**: View transaction details on MidenScan
-- **LocalStorage Persistence**: Faucet configuration is saved locally for convenience
-- **Responsive Design**: Modern UI built with Tailwind CSS
+- **Wallet-Based Authentication**: No traditional authentication - users are identified by their Miden wallet address
+- **Creator Profiles**: Simple profile creation with name and bio, stored in SQLite database
+- **Private Payments**: Supporters can send private HLT token payments (minimum 10 HLT) to creators
+- **Payment Management**: Creators can view and consume unsettled payments (notes) in their dashboard
+- **Public Creator Pages**: Each creator gets a unique public page at `/c/[walletAddress]`
+- **Modern UI**: Beautiful, responsive design with Tailwind CSS
+- **SQLite Database**: Lightweight local database for creator profiles
+
+## How It Works
+
+### For Creators
+
+1. **Connect Wallet**: Connect your Miden wallet to the application
+2. **Create Profile**: Navigate to the dashboard and set up your profile with:
+   - Name (required)
+   - Bio (optional)
+3. **Share Your Link**: Copy your public link (`/c/[your-wallet-address]`) and share it with supporters
+4. **Receive Payments**: Supporters send private HLT payments directly to your wallet
+5. **Claim Payments**: View unsettled payments in your dashboard and consume them to add tokens to your vault
+6. **View Balance**: Check your HLT balance in your Miden wallet
+
+### For Supporters
+
+1. **Visit Creator Page**: Navigate to a creator's public page using their wallet address
+2. **Connect Wallet**: Connect your Miden wallet
+3. **Enter Amount**: Enter the amount of HLT tokens to send (minimum 10 HLT)
+4. **Send Payment**: Click "Pay privately with Miden" to initiate a private transaction
+5. **Transaction Complete**: The payment is sent directly to the creator's wallet as a private note
+
+### Payment Flow
+
+```
+Supporter → Private Transaction → Creator's Wallet (as consumable note)
+                                    ↓
+                            Creator claims note in dashboard
+                                    ↓
+                            Tokens added to creator's vault
+```
+
+**Important**: All payments are sent directly to the creator's wallet. The dashboard shows unsettled notes that can be claimed. Once claimed, tokens appear in the creator's wallet balance.
 
 ## Prerequisites
 
 - Node.js 18+
 - Yarn package manager
-- A Miden-compatible wallet (for deploying faucets and consuming notes)
+- A Miden-compatible wallet (for connecting and transactions)
 
 ## Installation
 
-1. Navigate to the token app directory:
+1. Navigate to the app directory:
    ```bash
-   cd webapp/token
+   cd webapp/private-buy-me-a-coffee
    ```
 
 2. Install dependencies:
@@ -42,102 +76,68 @@ This Next.js application provides a clean, focused interface for deploying token
 
 4. Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-## Usage
-
-### Connecting a Wallet
-
-1. Click the "Connect Wallet" button in the top right
-2. Select your Miden-compatible wallet
-3. Approve the connection
-
-### Deploying a Faucet
-
-1. Navigate to the "Deploy Faucet" page using the navbar
-2. Ensure your wallet is connected
-3. Configure your token:
-   - **Token Type**: Currently only ERC20 (Fungible) is supported
-   - **Symbol**: Token symbol (e.g., "TEST", "MYTOKEN")
-   - **Decimals**: Number of decimal places (typically 8)
-   - **Initial Supply**: Total supply without decimals (e.g., 10000000 for 10M tokens)
-4. Click "Deploy Faucet"
-5. The faucet ID will be saved automatically and used for minting
-
-### Minting Tokens
-
-1. Navigate to the home page (Mint Tokens)
-2. Ensure your wallet is connected
-3. Enter or verify the faucet ID (or use a previously deployed faucet)
-4. Enter the amount to mint (without decimals)
-5. Click "Mint Tokens"
-6. Wait for the transaction to be submitted
-7. The app will automatically search for consumable notes
-8. Once notes are found, click "Consume Notes" to import them into your wallet
-9. Tokens will be added to your vault after successful consumption
-
-### Viewing Transactions
-
-- Click transaction links to view details on MidenScan
-- Both mint and consume transaction hashes are displayed with links
-
 ## Configuration
 
-The application is configured to work with the Miden Testnet. Key settings can be found in `app/constants.ts`:
+Key configuration values are in `app/constants.ts`:
 
-- **Network**: Miden Testnet
-- **RPC Endpoint**: `https://rpc.testnet.miden.io:443`
-- **Default Faucet Config**: Symbol "TEST", 8 decimals, 10M initial supply
+- **HLT_FAUCET_ID**: `mm1arajukt424pyvgrcgg6wxnycwvezgzey` - The HLT token faucet ID
+- **MIN_PAYMENT_AMOUNT**: `10` - Minimum payment amount in HLT tokens
+- **TOKEN_DECIMALS**: `8` - Number of decimals for HLT tokens
+- **NODE_ENDPOINT**: `https://rpc.testnet.miden.io:443` - Miden testnet RPC endpoint
 
-### Faucet Storage
+### Database
 
-Faucet information is stored in browser localStorage with the following keys:
-- `miden_token_faucet_id`: The faucet account ID
-- `miden_token_faucet_type`: Whether it's fungible or non-fungible
-- `miden_token_faucet_symbol`: Token symbol
-- `miden_token_faucet_decimals`: Number of decimals
+The application uses SQLite for storing creator profiles. The database file is created automatically at `data/coffee.db` on first run.
+
+**Schema**:
+- `creators` table with:
+  - `id` (INTEGER PRIMARY KEY)
+  - `walletAddress` (TEXT UNIQUE NOT NULL)
+  - `name` (TEXT NOT NULL)
+  - `bio` (TEXT nullable)
+  - `createdAt` (DATETIME)
+  - `updatedAt` (DATETIME)
 
 ## Project Structure
 
 ```
-token/
+private-buy-me-a-coffee/
 ├── app/
+│   ├── api/
+│   │   ├── creator/
+│   │   │   └── [walletAddress]/
+│   │   │       └── route.ts          # GET creator by wallet address
+│   │   └── profile/
+│   │       └── route.ts              # POST create/update creator profile
+│   ├── c/
+│   │   └── [walletAddress]/
+│   │       └── page.tsx              # Public creator page
 │   ├── components/
-│   │   ├── Navbar.tsx              # Navigation bar component
-│   │   └── WalletProviders.tsx    # Wallet connection providers
-│   ├── deploy/
-│   │   └── page.tsx               # Faucet deployment page
-│   ├── constants.ts               # Configuration constants
-│   ├── utils.ts                   # Utility functions for client, faucet, and note operations
-│   ├── page.tsx                   # Main minting interface
-│   ├── layout.tsx                 # App layout and providers
-│   └── globals.css                # Global styles
-├── package.json                   # Dependencies and scripts
-├── tailwind.config.js             # Tailwind CSS configuration
-└── next.config.ts                 # Next.js configuration
+│   │   ├── CreatorProfileForm.tsx   # Profile editing form
+│   │   ├── Navbar.tsx               # Navigation bar
+│   │   ├── PaymentsTable.tsx        # Payments/notes table component
+│   │   ├── SupportCard.tsx          # Payment card component
+│   │   └── WalletProviders.tsx      # Wallet connection providers
+│   ├── dashboard/
+│   │   └── page.tsx                 # Creator dashboard
+│   ├── lib/
+│   │   └── db.ts                    # SQLite database setup and helpers
+│   ├── constants.ts                 # Configuration constants
+│   ├── utils.ts                     # Utility functions (transactions, notes, etc.)
+│   ├── page.tsx                     # Landing page
+│   ├── layout.tsx                   # App layout
+│   └── globals.css                  # Global styles
+├── data/
+│   └── coffee.db                    # SQLite database (auto-created)
+├── package.json                     # Dependencies and scripts
+├── next.config.ts                   # Next.js configuration
+└── tailwind.config.js               # Tailwind CSS configuration
 ```
-
-## Development
-
-### Available Scripts
-
-- `yarn dev` - Start development server
-- `yarn build` - Build for production
-- `yarn start` - Start production server
-- `yarn lint` - Run ESLint
-
-### Code Organization
-
-- **Components**: Reusable UI components (Navbar, WalletProviders)
-- **Utils**: Client, faucet, and note operation utilities
-- **Constants**: Configuration values (endpoints, storage keys, defaults)
-- **Pages**: Route-specific components (home for minting, deploy for faucet creation)
-
-### Token Minting Flow
-
-1. **Deploy Faucet**: User creates a faucet account with token configuration
-2. **Mint Tokens**: Faucet mints tokens, creating P2ID notes for the recipient
-3. **Note Detection**: App polls for consumable notes after mint transaction
-4. **Consume Notes**: User consumes notes via wallet adapter to add tokens to vault
-
 ### Important Notes
 
-- **ERC721 Support**: Non-fungible tokens (ERC721) are not yet supported. Only ERC20 tokens can be deployed and minted.
+- **Database**: The SQLite database file (`data/coffee.db`) is automatically created on first run
+- **Wallet Address**: Used as the unique identifier for creators (no traditional authentication)
+- **Private Transactions**: All payments are private transactions on the Miden blockchain
+- **Note Consumption**: Creators must consume notes to add tokens to their vault - payments don't automatically appear in balance
+- **Network**: Currently configured for Miden Testnet
+
