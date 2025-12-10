@@ -53,12 +53,12 @@ export default function CreatorPage({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-slate-100">
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-slate-100">
         <Navbar />
-        <main className="max-w-4xl mx-auto px-4 py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400 mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading creator profile...</p>
+        <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="text-center space-y-4">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-orange-500/20 border-t-orange-500 mx-auto"></div>
+            <p className="text-gray-400 text-lg">Loading creator profile...</p>
           </div>
         </main>
       </div>
@@ -67,22 +67,30 @@ export default function CreatorPage({
 
   if (error || !creator) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-slate-100">
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-slate-100">
         <Navbar />
-        <main className="max-w-4xl mx-auto px-4 py-12">
-          <div className="bg-gray-800/20 border border-gray-600 rounded-2xl p-8 text-center">
-            <h1 className="text-2xl font-semibold mb-4 text-red-400">
-              Creator Not Found
-            </h1>
-            <p className="text-gray-400 mb-6">
-              {error || "This creator profile does not exist."}
-            </p>
-            <a
-              href="/"
-              className="text-orange-400 hover:text-orange-300 underline"
-            >
-              Return to home
-            </a>
+        <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="relative bg-gradient-to-br from-gray-800/60 to-gray-900/60 border border-red-700/50 rounded-3xl p-12 text-center backdrop-blur-sm">
+            <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-red-600/5 rounded-3xl"></div>
+            <div className="relative">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-red-500/20">
+                <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h1 className="text-3xl font-bold mb-4 text-red-400">
+                Creator Not Found
+              </h1>
+              <p className="text-gray-300 mb-8 text-lg">
+                {error || "This creator profile does not exist."}
+              </p>
+              <a
+                href="/"
+                className="inline-block px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg shadow-orange-500/25 hover:shadow-xl"
+              >
+                Return to home
+              </a>
+            </div>
           </div>
         </main>
       </div>
@@ -90,23 +98,33 @@ export default function CreatorPage({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-slate-100">
       <Navbar />
-      <main className="max-w-4xl mx-auto px-4 py-12">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Creator Profile */}
-        <div className="bg-gray-800/20 border border-gray-600 rounded-2xl p-8 mb-8">
-          <h1 className="text-4xl font-bold mb-4 text-orange-400">
-            {creator.name}
-          </h1>
-          {creator.bio && (
-            <p className="text-gray-300 text-lg leading-relaxed whitespace-pre-wrap">
-              {creator.bio}
-            </p>
-          )}
-          <div className="mt-4 pt-4 border-t border-gray-700">
-            <p className="text-sm text-gray-500">
-              Wallet: <span className="font-mono text-gray-400">{creator.walletAddress}</span>
-            </p>
+        <div className="relative bg-gradient-to-br from-gray-800/60 to-gray-900/60 border border-gray-700/50 rounded-3xl p-10 sm:p-12 mb-10 backdrop-blur-sm">
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-orange-600/5 rounded-3xl"></div>
+          <div className="relative">
+            <div className="flex items-center space-x-4 mb-6">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-2xl shadow-lg shadow-orange-500/20">
+                ☕
+              </div>
+              <div>
+                <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+                  {creator.name}
+                </h1>
+                <p className="text-sm text-gray-400 font-mono">
+                  {creator.walletAddress}
+                </p>
+              </div>
+            </div>
+            {creator.bio && (
+              <div className="mt-8 pt-8 border-t border-gray-700/50">
+                <p className="text-gray-200 text-lg sm:text-xl leading-relaxed whitespace-pre-wrap">
+                  {creator.bio}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
