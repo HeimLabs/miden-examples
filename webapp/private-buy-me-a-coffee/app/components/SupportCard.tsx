@@ -147,24 +147,13 @@ export function SupportCard({ creatorAddress }: SupportCardProps) {
                 </div>
                 <div className="flex-1">
                   <p className="text-green-400 text-sm font-bold mb-2">
-                    Payment sent successfully! 🎉
+                    Private payment sent successfully! 🎉
                   </p>
                   <p className="text-xs text-gray-400 break-all font-mono mb-3 bg-gray-900/50 p-2 rounded">
-                    {txHash}
+                    Note ID: {txHash}
                   </p>
-                  <a
-                    href={`https://testnet.midenscan.com/tx/${txHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-green-300 hover:text-green-200 font-medium inline-flex items-center space-x-1"
-                  >
-                    <span>View on MidenScan</span>
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </a>
                   <p className="text-xs text-gray-400 mt-3">
-                    The creator will see this payment in their dashboard. It may take a few moments to appear.
+                    The private note has been sent to the creator. They will see this payment in their dashboard and can consume it to add tokens to their vault.
                   </p>
                 </div>
               </div>

@@ -1,4 +1,4 @@
-export const NODE_ENDPOINT = "https://rpc.testnet.miden.io:443";
+export const NODE_ENDPOINT = "http://localhost:57291";
 
 // HLT Token Configuration
 export const HLT_FAUCET_ID = "mm1arajukt424pyvgrcgg6wxnycwvezgzey";

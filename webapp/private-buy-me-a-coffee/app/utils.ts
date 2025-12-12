@@ -4,6 +4,10 @@ import {
   AccountStorageMode,
   NoteType,
   ConsumableNoteRecord,
+  Note,
+  NoteAssets,
+  FungibleAsset,
+  Felt,
 } from "@demox-labs/miden-sdk";
 import { SendTransaction, ConsumeTransaction, MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter";
 import { NODE_ENDPOINT, STORAGE_KEYS, HLT_FAUCET_ID, TOKEN_DECIMALS } from "./constants";
@@ -143,15 +147,14 @@ export const handleError = (error: any, context: string): string => {
 /**
  * Send a private HLT token payment
  * 
- * This function creates a private SendTransaction using the Miden wallet adapter.
- * The transaction sends HLT tokens from the sender to the recipient.
- * After sending, it syncs the client state so the transaction is recorded on-chain.
+ * This function creates a transaction that outputs a private note and sends it via the note transport layer.
+ * The note contains HLT tokens that can be consumed by the recipient.
  * 
  * @param walletAdapter - The Miden wallet adapter instance
  * @param senderAddress - The sender's wallet address
  * @param recipientAddress - The recipient's wallet address
  * @param amount - The amount in HLT tokens (will be converted to base units)
- * @returns Promise<string> - The transaction hash
+ * @returns Promise<string> - The note ID
  */
 export const sendPrivatePayment = async (
   walletAdapter: MidenWalletAdapter,
@@ -159,40 +162,87 @@ export const sendPrivatePayment = async (
   recipientAddress: string,
   amount: number
 ): Promise<string> => {
-  const amountInBaseUnits = Number(amount) * 10 ** TOKEN_DECIMALS;
+  const amountInBaseUnits = BigInt(Number(amount) * 10 ** TOKEN_DECIMALS);
 
+  console.log(`Creating private payment: ${amount} HLT from ${senderAddress} to ${recipientAddress}`);
+
+  // Create WebClient for note operations
+  const client = await createAndSyncClient();
+
+  // Get account IDs from addresses
+  const senderAccountId = getAccountIdFromAddress(senderAddress);
+  const recipientAccountId = getAccountIdFromAddress(recipientAddress);
+
+  // Get faucet account ID
+  const faucetAddress = Address.fromBech32(HLT_FAUCET_ID);
+  const faucetAccountId = faucetAddress.accountId();
+
+  // Create fungible asset with the amount
+  const asset = new FungibleAsset(faucetAccountId, amountInBaseUnits);
+  const noteAssets = new NoteAssets([asset]);
+
+  // Create a private P2ID note (Pay to ID) - this is the note that will be output by the transaction
+  const privateNote = Note.createP2IDNote(
+    senderAccountId,
+    recipientAccountId,
+    noteAssets,
+    NoteType.Private,
+    new Felt(BigInt(0)) // aux value
+  );
+
+  const noteId = privateNote.id().toString();
+  console.log(`Private note created with ID: ${noteId}`);
+
+  // Create a SendTransaction that will output this private note
+  // The transaction consumes tokens from sender's vault and outputs the private note
   const sendTransaction = new SendTransaction(
     senderAddress,
     recipientAddress,
     HLT_FAUCET_ID,
     "private",
-    amountInBaseUnits
+    Number(amountInBaseUnits)
   );
 
+  // Execute the transaction via wallet adapter
   // @ts-ignore - requestSend exists on adapter at runtime
   const txHash = await walletAdapter.requestSend(sendTransaction);
 
   if (!txHash) {
+    // Clean up resources before throwing
+    privateNote.free();
+    noteAssets.free();
+    asset.free();
     throw new Error("Transaction failed: No transaction hash returned");
   }
 
   const txHashString = typeof txHash === "string" ? txHash : String(txHash);
+  console.log(`Transaction submitted: ${txHashString}`);
 
-  console.log(`Private payment transaction submitted: ${txHashString}`);
-  console.log(`Sending ${amount} HLT from ${senderAddress} to ${recipientAddress}`);
-
-  // Sync client state after sending to ensure transaction is recorded
+  // Send the private note via the note transport layer
+  // Convert recipient address string to Address object
+  const recipientAddr = Address.fromBech32(recipientAddress);
   try {
-    console.log("Syncing client state after transaction...");
-    const client = await createAndSyncClient();
-    await client.syncState();
-    console.log("Client state synced successfully");
+    await client.sendPrivateNote(privateNote, recipientAddr);
+    console.log(`Private note sent successfully to ${recipientAddress}`);
   } catch (err) {
-    console.warn("Failed to sync client state after sending:", err);
-    // Don't throw - transaction was successful, sync can happen later
+    console.error("Error sending private note:", err);
+    // Clean up resources before throwing
+    privateNote.free();
+    noteAssets.free();
+    asset.free();
+    recipientAddr.free();
+    throw new Error(`Failed to send private note: ${err instanceof Error ? err.message : String(err)}`);
   }
 
-  return txHashString;
+  // Clean up address object
+  recipientAddr.free();
+
+  // Clean up resources
+  privateNote.free();
+  noteAssets.free();
+  asset.free();
+
+  return noteId;
 };
 
 /**
