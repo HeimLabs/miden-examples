@@ -218,24 +218,21 @@ export const sendPrivatePayment = async (
   const txHashString = typeof txHash === "string" ? txHash : String(txHash);
   console.log(`Transaction submitted: ${txHashString}`);
 
-  // Send the private note via the note transport layer
-  // Convert recipient address string to Address object
-  const recipientAddr = Address.fromBech32(recipientAddress);
+  // Send the private note details via XMTP
   try {
-    await client.sendPrivateNote(privateNote, recipientAddr);
-    console.log(`Private note sent successfully to ${recipientAddress}`);
+    const { sendPrivateNoteMessage } = await import("./utils/xmtp");
+    await sendPrivateNoteMessage(
+      senderAddress,
+      recipientAddress,
+      noteId,
+      amount
+    );
+    console.log(`Private note message sent via XMTP to ${recipientAddress}`);
   } catch (err) {
-    console.error("Error sending private note:", err);
-    // Clean up resources before throwing
-    privateNote.free();
-    noteAssets.free();
-    asset.free();
-    recipientAddr.free();
-    throw new Error(`Failed to send private note: ${err instanceof Error ? err.message : String(err)}`);
+    console.error("Error sending private note via XMTP:", err);
+    // Don't throw - transaction was successful, XMTP is just for notification
+    // The note is still on-chain and can be consumed
   }
-
-  // Clean up address object
-  recipientAddr.free();
 
   // Clean up resources
   privateNote.free();

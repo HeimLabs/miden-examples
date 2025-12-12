@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useWallet, MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter";
 import { TOKEN_DECIMALS, HLT_FAUCET_ID } from "../constants";
 
@@ -20,51 +20,35 @@ interface PaymentsTableProps {
   creatorAddress: string;
 }
 
-interface ConsumableNote {
+interface PrivateNoteMessage {
   noteId: string;
-  amount?: number;
-  [key: string]: any;
+  amount: number;
+  senderAddress: string;
+  timestamp: string;
 }
 
 export function PaymentsTable({ creatorAddress }: PaymentsTableProps) {
-  const { connected, address, wallet, requestConsumableNotes } = useWallet();
-  const [notes, setNotes] = useState<ConsumableNote[]>([]);
+  const { connected, address, wallet } = useWallet();
+  const [notes, setNotes] = useState<PrivateNoteMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [consumingNoteId, setConsumingNoteId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const streamCleanupRef = useRef<(() => void) | null>(null);
 
   const loadNotes = async () => {
-    if (!connected || !address || address !== creatorAddress || !requestConsumableNotes) return;
+    if (!connected || !address || address !== creatorAddress) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
-      // Request consumable notes from wallet - this will prompt the wallet to confirm
-      // and return the notes that the creator can consume
-      console.log("Requesting consumable notes from wallet...");
-      const walletNotes = await requestConsumableNotes?.();
-
-      console.log("Received notes from wallet:", walletNotes);
-
-      if (walletNotes && Array.isArray(walletNotes)) {
-        // Transform wallet notes to our format
-        const transformedNotes = walletNotes.map((note: any) => ({
-          noteId: note.noteId || note.id || note,
-          amount: note.amount,
-          ...note,
-        }));
-        setNotes(transformedNotes);
-      } else {
-        setNotes([]);
-      }
+      // Load private note messages from XMTP
+      const { getPrivateNoteMessages } = await import("../utils/xmtp");
+      const messages = await getPrivateNoteMessages(creatorAddress);
+      setNotes(messages);
     } catch (err: any) {
       setError(err.message || "Failed to load notes");
       console.error("Error loading notes:", err);
-      // If user cancels the wallet prompt, don't show error
-      if (err.message?.includes("cancel") || err.message?.includes("reject")) {
-        setError(null);
-      }
     } finally {
       setIsLoading(false);
     }
@@ -73,14 +57,56 @@ export function PaymentsTable({ creatorAddress }: PaymentsTableProps) {
   useEffect(() => {
     if (!connected || !address || address !== creatorAddress) {
       setNotes([]);
+      // Clean up stream if it exists
+      if (streamCleanupRef.current) {
+        streamCleanupRef.current();
+        streamCleanupRef.current = null;
+      }
       return;
     }
 
-    // Don't auto-load notes since requestConsumableNotes requires wallet confirmation
-    // User will need to click "Refresh" to request notes from wallet
+    // Load initial notes
+    loadNotes();
+
+    // Set up streaming for new messages
+    const setupStream = async () => {
+      try {
+        const { streamPrivateNoteMessages } = await import("../utils/xmtp");
+        const cleanup = await streamPrivateNoteMessages(
+          creatorAddress,
+          (message) => {
+            // Add new message to the list
+            setNotes((prev) => {
+              // Check if note already exists
+              if (prev.some((n) => n.noteId === message.noteId)) {
+                return prev;
+              }
+              return [...prev, message];
+            });
+          },
+          (err) => {
+            console.error("XMTP stream error:", err);
+            setError("Failed to stream messages: " + err.message);
+          }
+        );
+        streamCleanupRef.current = cleanup;
+      } catch (err) {
+        console.error("Failed to setup XMTP stream:", err);
+      }
+    };
+
+    setupStream();
+
+    // Cleanup on unmount
+    return () => {
+      if (streamCleanupRef.current) {
+        streamCleanupRef.current();
+        streamCleanupRef.current = null;
+      }
+    };
   }, [connected, address, creatorAddress]);
 
-  const handleConsumeNote = async (noteId: string, note: ConsumableNote) => {
+  const handleConsumeNote = async (noteId: string, note: PrivateNoteMessage) => {
     if (!connected || !address || !wallet || address !== creatorAddress) {
       setError("You must be connected with the creator's wallet");
       return;
@@ -92,15 +118,15 @@ export function PaymentsTable({ creatorAddress }: PaymentsTableProps) {
     try {
       const adapter = wallet.adapter as MidenWalletAdapter;
 
-      // Extract amount from note, default to 10 HLT if not available
+      // Use amount from the note message
       const amount = note.amount || 10;
 
       // Dynamically import consumeNote to avoid SDK loading during build
       const consumeNoteFn = await getConsumeNote();
       await consumeNoteFn(adapter, noteId, amount);
 
-      // Reload notes after consumption
-      await loadNotes();
+      // Remove consumed note from the list
+      setNotes((prev) => prev.filter((n) => n.noteId !== noteId));
     } catch (err: any) {
       setError(err.message || "Failed to consume note");
       console.error("Error consuming note:", err);
@@ -109,11 +135,8 @@ export function PaymentsTable({ creatorAddress }: PaymentsTableProps) {
     }
   };
 
-  const formatAmount = (note: ConsumableNote): string => {
-    if (note.amount) {
-      return `${note.amount} HLT`;
-    }
-    return "~10 HLT"; // Default placeholder
+  const formatAmount = (note: PrivateNoteMessage): string => {
+    return `${note.amount} HLT`;
   };
 
   if (!connected || address !== creatorAddress) {
@@ -144,8 +167,8 @@ export function PaymentsTable({ creatorAddress }: PaymentsTableProps) {
           <div className="flex-1">
             <p className="text-blue-300 font-semibold mb-1">How payments work</p>
             <p className="text-sm text-gray-300 leading-relaxed">
-              All payments are sent directly to your wallet! You can view your HLT balance anytime in your Miden wallet.
-              The payments shown here are <span className="font-semibold text-blue-200">unsettled notes</span> that you can claim
+              All payments are sent directly to your wallet via private Miden transactions! You'll receive notifications
+              via XMTP when supporters send you payments. The payments shown here are <span className="font-semibold text-blue-200">private notes</span> that you can claim
               to add tokens to your vault. Once claimed, they'll appear in your wallet balance.
             </p>
           </div>
@@ -159,7 +182,7 @@ export function PaymentsTable({ creatorAddress }: PaymentsTableProps) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h3 className="text-xl font-bold text-white">Unsettled Payments</h3>
+          <h3 className="text-xl font-bold text-white">Private Payments</h3>
         </div>
         <button
           onClick={loadNotes}
@@ -194,9 +217,9 @@ export function PaymentsTable({ creatorAddress }: PaymentsTableProps) {
       {isLoading && notes.length === 0 ? (
         <div className="p-12 text-center bg-gray-800/30 rounded-2xl border border-gray-700/50">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-500/20 border-t-orange-500 mx-auto mb-4"></div>
-          <p className="text-gray-300 font-medium mb-2">Requesting notes from wallet...</p>
+          <p className="text-gray-300 font-medium mb-2">Loading private payments...</p>
           <p className="text-sm text-gray-400">
-            Please confirm in your wallet to view consumable notes
+            Fetching messages from XMTP
           </p>
         </div>
       ) : notes.length === 0 && !isLoading ? (
@@ -206,17 +229,17 @@ export function PaymentsTable({ creatorAddress }: PaymentsTableProps) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
           </div>
-          <p className="text-gray-300 font-semibold text-lg mb-2">No unsettled payments</p>
+          <p className="text-gray-300 font-semibold text-lg mb-2">No private payments</p>
           <p className="text-sm text-gray-400 mb-6 max-w-md mx-auto">
-            Great news! You don't have any unsettled payments right now. All your payments have been sent directly to your wallet.
-            Click "Refresh" to check for any new consumable notes that need to be claimed.
+            You don't have any private payments right now. When supporters send you payments, you'll receive notifications
+            via XMTP and they'll appear here. Click "Refresh" to check for any new messages.
           </p>
           <button
             onClick={loadNotes}
             disabled={isLoading}
             className="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white rounded-xl text-sm font-semibold transition-all duration-300 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:scale-105 active:scale-95"
           >
-            Check for New Notes
+            Refresh Messages
           </button>
         </div>
       ) : (
@@ -229,6 +252,9 @@ export function PaymentsTable({ creatorAddress }: PaymentsTableProps) {
                 </th>
                 <th className="text-left py-4 px-6 text-sm font-bold text-gray-200">
                   Amount
+                </th>
+                <th className="text-left py-4 px-6 text-sm font-bold text-gray-200">
+                  From
                 </th>
                 <th className="text-right py-4 px-6 text-sm font-bold text-gray-200">
                   Action
@@ -252,6 +278,11 @@ export function PaymentsTable({ creatorAddress }: PaymentsTableProps) {
                     </td>
                     <td className="py-4 px-6">
                       <span className="text-gray-200 font-semibold">{formatAmount(note)}</span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <code className="text-sm text-gray-400 font-mono bg-gray-900/50 px-2 py-1 rounded">
+                        {trimAddress(note.senderAddress)}
+                      </code>
                     </td>
                     <td className="py-4 px-6 text-right">
                       <button
