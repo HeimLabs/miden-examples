@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@coinbase/cdp-sdk": "^1.40.1",
     "@demox-labs/miden-sdk": "0.12.3",
     "@demox-labs/miden-wallet-adapter": "^0.10.0",
     "better-sqlite3": "^11.7.0",

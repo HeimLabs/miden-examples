@@ -6,6 +6,7 @@ import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter";
 import { Navbar } from "../components/Navbar";
 import { CreatorProfileForm } from "../components/CreatorProfileForm";
 import { PaymentsTable } from "../components/PaymentsTable";
+import { Account, Address } from "@demox-labs/miden-sdk";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -22,6 +23,45 @@ export default function DashboardPage() {
   const [publicLink, setPublicLink] = useState<string>("");
   const [embedLink, setEmbedLink] = useState<string>("");
   const [showEmbedCode, setShowEmbedCode] = useState(false);
+  const [evmAddress, setEvmAddress] = useState<string | null>(null);
+
+  // Automatically get or create CDP account when wallet connects
+  useEffect(() => {
+    const initializeCdpAccount = async () => {
+      if (address && connected) {
+        try {
+
+          const account = Address.fromBech32(address)
+          console.log(account.accountId().toString());
+
+          // Call API to get or create CDP account
+          const response = await fetch("/api/cdp/account", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              midenAddress: account.accountId().toString(),
+            }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setEvmAddress(data.evmAddress);
+            console.log("CDP account initialized:", data.evmAddress);
+          } else {
+            console.error("Failed to initialize CDP account");
+          }
+        } catch (error) {
+          console.error("Error initializing CDP account:", error);
+        }
+      } else {
+        setEvmAddress(null);
+      }
+    };
+
+    initializeCdpAccount();
+  }, [address, connected]);
 
   useEffect(() => {
     if (address && typeof window !== 'undefined') {
@@ -121,11 +161,21 @@ export default function DashboardPage() {
         </div>
 
         {address && (
-          <div className="mb-8 p-5 bg-gradient-to-r from-gray-800/60 to-gray-900/60 border border-gray-700/50 rounded-2xl backdrop-blur-sm">
-            <p className="text-sm text-gray-400 mb-2 font-medium">Wallet Address</p>
-            <p className="text-sm font-mono text-orange-400 break-all">
-              {address}
-            </p>
+          <div className="mb-8 space-y-4">
+            <div className="p-5 bg-gradient-to-r from-gray-800/60 to-gray-900/60 border border-gray-700/50 rounded-2xl backdrop-blur-sm">
+              <p className="text-sm text-gray-400 mb-2 font-medium">Miden Wallet Address</p>
+              <p className="text-sm font-mono text-orange-400 break-all">
+                {address}
+              </p>
+            </div>
+            {evmAddress && (
+              <div className="p-5 bg-gradient-to-r from-gray-800/60 to-gray-900/60 border border-gray-700/50 rounded-2xl backdrop-blur-sm">
+                <p className="text-sm text-gray-400 mb-2 font-medium">EVM Wallet Address</p>
+                <p className="text-sm font-mono text-blue-400 break-all">
+                  {evmAddress}
+                </p>
+              </div>
+            )}
           </div>
         )}
 
