@@ -123,7 +123,7 @@ export function PaymentsTable({ creatorAddress }: PaymentsTableProps) {
 
       // Dynamically import consumeNote to avoid SDK loading during build
       const consumeNoteFn = await getConsumeNote();
-      await consumeNoteFn(adapter, noteId, amount);
+      await consumeNoteFn(adapter, address, noteId, amount);
 
       // Remove consumed note from the list
       setNotes((prev) => prev.filter((n) => n.noteId !== noteId));
@@ -273,15 +273,15 @@ export function PaymentsTable({ creatorAddress }: PaymentsTableProps) {
                   >
                     <td className="py-4 px-6">
                       <code className="text-sm text-gray-300 font-mono bg-gray-900/50 px-2 py-1 rounded">
-                        {trimAddress(noteId)}
+                        {noteId}
                       </code>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-gray-200 font-semibold">{formatAmount(note)}</span>
+                      <span className="text-gray-200 font-semibold">{note.amount}</span>
                     </td>
                     <td className="py-4 px-6">
                       <code className="text-sm text-gray-400 font-mono bg-gray-900/50 px-2 py-1 rounded">
-                        {trimAddress(note.senderAddress)}
+                        {note.timestamp}
                       </code>
                     </td>
                     <td className="py-4 px-6 text-right">

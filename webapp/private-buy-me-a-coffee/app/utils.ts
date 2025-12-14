@@ -162,7 +162,7 @@ export const sendPrivatePayment = async (
   recipientAddress: string,
   amount: number
 ): Promise<string> => {
-  const amountInBaseUnits = BigInt(Number(amount) * 10 ** TOKEN_DECIMALS);
+  const amountInBaseUnits = BigInt((amount ** TOKEN_DECIMALS) / 10);
 
   console.log(`Creating private payment: ${amount} HLT from ${senderAddress} to ${recipientAddress}`);
 
@@ -182,6 +182,7 @@ export const sendPrivatePayment = async (
   const noteAssets = new NoteAssets([asset]);
 
   // Create a private P2ID note (Pay to ID) - this is the note that will be output by the transaction
+  // Note: createP2IDNote takes ownership of noteAssets (which owns asset), so we only need to free privateNote
   const privateNote = Note.createP2IDNote(
     senderAccountId,
     recipientAccountId,
@@ -189,6 +190,7 @@ export const sendPrivatePayment = async (
     NoteType.Private,
     new Felt(BigInt(0)) // aux value
   );
+
 
   const noteId = privateNote.id().toString();
   console.log(`Private note created with ID: ${noteId}`);
@@ -203,43 +205,45 @@ export const sendPrivatePayment = async (
     Number(amountInBaseUnits)
   );
 
-  // Execute the transaction via wallet adapter
-  // @ts-ignore - requestSend exists on adapter at runtime
-  const txHash = await walletAdapter.requestSend(sendTransaction);
-
-  if (!txHash) {
-    // Clean up resources before throwing
-    privateNote.free();
-    noteAssets.free();
-    asset.free();
-    throw new Error("Transaction failed: No transaction hash returned");
-  }
-
-  const txHashString = typeof txHash === "string" ? txHash : String(txHash);
-  console.log(`Transaction submitted: ${txHashString}`);
-
-  // Send the private note details via XMTP
   try {
-    const { sendPrivateNoteMessage } = await import("./utils/xmtp");
-    await sendPrivateNoteMessage(
-      senderAddress,
-      recipientAddress,
-      noteId,
-      amount
-    );
-    console.log(`Private note message sent via XMTP to ${recipientAddress}`);
-  } catch (err) {
-    console.error("Error sending private note via XMTP:", err);
-    // Don't throw - transaction was successful, XMTP is just for notification
-    // The note is still on-chain and can be consumed
+    // Execute the transaction via wallet adapter
+    const txHash = await walletAdapter.requestSend(sendTransaction);
+
+    if (!txHash) {
+      throw new Error("Transaction failed: No transaction hash returned");
+    }
+
+    const txHashString = typeof txHash === "string" ? txHash : String(txHash);
+    console.log(`Transaction submitted: ${txHashString}`);
+
+    // Send the private note details via XMTP
+    try {
+      const { sendPrivateNoteMessage } = await import("./utils/xmtp");
+      await sendPrivateNoteMessage(
+        senderAddress,
+        recipientAddress,
+        noteId,
+        amount
+      );
+      console.log(`Private note message sent via XMTP to ${recipientAddress}`);
+    } catch (err) {
+      console.error("Error sending private note via XMTP:", err);
+      // Don't throw - transaction was successful, XMTP is just for notification
+      // The note is still on-chain and can be consumed
+    }
+
+    return noteId;
+  } finally {
+    // Clean up resources - only free privateNote as it owns noteAssets and asset
+    // Check if privateNote exists and hasn't been freed already
+    if (privateNote) {
+      try {
+        privateNote.free();
+      } catch (err) {
+        console.warn("Error freeing privateNote:", err);
+      }
+    }
   }
-
-  // Clean up resources
-  privateNote.free();
-  noteAssets.free();
-  asset.free();
-
-  return noteId;
 };
 
 /**
@@ -308,13 +312,16 @@ export const consumeNote = async (
   noteId: string,
   amount: number
 ): Promise<string> => {
-  const amountInBaseUnits = Number(amount) * 10 ** TOKEN_DECIMALS;
+  // const amountInBaseUnits = BigInt((amount ** TOKEN_DECIMALS) / 10);
+  // console.log("amountInBaseUnits", amountInBaseUnits.toLocaleString());
+  console.log(walletAdapter.requestConsume);
+
 
   const consumeTransaction = new ConsumeTransaction(
     HLT_FAUCET_ID,
     noteId,
     "private",
-    amountInBaseUnits
+    amount
   );
 
   const txHash = await walletAdapter.requestConsume(consumeTransaction);
