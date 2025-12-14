@@ -2,17 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useWallet, MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter";
-import { TOKEN_DECIMALS, HLT_FAUCET_ID } from "../constants";
-
-// Helper function moved here to avoid importing SDK during build
-const trimAddress = (address: string): string => {
-  if (address.length <= 10) return address;
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
-};
 
 // Dynamic import for consumeNote to avoid SDK loading during build
 const getConsumeNote = async () => {
-  const { consumeNote } = await import("../utils");
+  const { consumeNote } = await import("../utils/miden");
   return consumeNote;
 };
 
@@ -123,7 +116,7 @@ export function PaymentsTable({ creatorAddress }: PaymentsTableProps) {
 
       // Dynamically import consumeNote to avoid SDK loading during build
       const consumeNoteFn = await getConsumeNote();
-      await consumeNoteFn(adapter, address, noteId, amount);
+      await consumeNoteFn(adapter, noteId, amount);
 
       // Remove consumed note from the list
       setNotes((prev) => prev.filter((n) => n.noteId !== noteId));

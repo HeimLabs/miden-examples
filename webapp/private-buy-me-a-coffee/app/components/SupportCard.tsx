@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useWallet, MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter";
-import { sendPrivatePayment } from "../utils";
+import { sendPrivatePayment } from "../utils/miden";
 import { MIN_PAYMENT_AMOUNT, HLT_FAUCET_ID } from "../constants";
 
 interface SupportCardProps {

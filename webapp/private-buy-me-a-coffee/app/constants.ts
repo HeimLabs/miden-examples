@@ -1,7 +1,7 @@
 export const NODE_ENDPOINT = "https://rpc.testnet.miden.io:443";
 
 // HLT Token Configuration
-export const HLT_FAUCET_ID = "mm1apr6jyg277q0ugr6rgeg5ushjy39j8u6";
+export const HLT_FAUCET_ID = "mtst1arajukt424pyvgrcgg6wxnycwvwynus4";
 export const MIN_PAYMENT_AMOUNT = 10;
 export const TOKEN_DECIMALS = 8;
 

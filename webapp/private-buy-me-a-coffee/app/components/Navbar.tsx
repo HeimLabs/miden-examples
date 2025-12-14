@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useWallet } from "@demox-labs/miden-wallet-adapter";
 import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter";
-import { trimAddress } from "../utils";
+import { trimAddress } from "../utils/miden";
 import { Address } from "@demox-labs/miden-sdk";
 
 export function Navbar() {
